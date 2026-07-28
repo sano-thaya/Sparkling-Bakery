@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String?
+  email        String   @unique
+  passwordHash String?
+  role         String   @default("customer") // "admin" or "customer"
+  orders       Order[]
+  createdAt    DateTime @default(now())
+}
+
+model Order {
+  id           String    @id @default(cuid())
+  customer     User?     @relation(fields: [customerId], references: [id])
+  customerId   String?
+  guestName    String?
+  guestEmail   String?
+  guestPhone   String?
+  description  String
+  price        Decimal
+  status       String    @default("pending") // pending, confirmed, in-progress, completed, cancelled
+  deliveryDate DateTime
+  payment      Payment?
+  createdAt    DateTime  @default(now())
+}
+
+model Payment {
+  id              String   @id @default(cuid())
+  order           Order    @relation(fields: [orderId], references: [id])
+  orderId         String   @unique
+  amount          Decimal
+  stripePaymentId String?
+  status          String   @default("pending")
+  createdAt       DateTime @default(now())
+}
+
+model Post {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  imageUrls   String[]
+  category    String?
+  createdAt   DateTime @default(now())
+}
+
+model Enquiry {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  message   String
+  status    String   @default("new") // new, responded
+  createdAt DateTime @default(now())
+}
