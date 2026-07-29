@@ -1,8 +1,7 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
-// Using placeholder logic since we don't have bcrypt installed right now, 
-// normally we'd import bcrypt to compare password hashes.
+import bcrypt from "bcryptjs";
 
 const handler = NextAuth({
   providers: [
@@ -14,15 +13,15 @@ const handler = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
-        
+
         const user = await prisma.user.findUnique({
           where: { email: credentials.email }
         });
 
         if (!user || !user.passwordHash) return null;
-        
-        // In a real app we would use bcrypt.compare
-        const passwordsMatch = credentials.password === user.passwordHash;
+
+        // Use bcrypt to compare password hashes
+        const passwordsMatch = bcrypt.compareSync(credentials.password, user.passwordHash);
 
         if (passwordsMatch) {
           return { id: user.id, email: user.email, name: user.name, role: user.role };
@@ -47,6 +46,10 @@ const handler = NextAuth({
   },
   pages: {
     signIn: '/login',
+  },
+  secret: process.env.NEXTAUTH_SECRET,
+  session: {
+    strategy: "jwt",
   },
 });
 

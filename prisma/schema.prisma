@@ -48,7 +48,13 @@ model Post {
   description String?
   imageUrls   String[]
   category    String?
+  views       Int      @default(0)
   createdAt   DateTime @default(now())
+}
+
+model Settings {
+  id         String  @id @default(cuid())
+  baseAmount Decimal @default(0)
 }
 
 model Enquiry {

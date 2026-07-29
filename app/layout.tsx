@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
 import { Inter, Fraunces } from "next/font/google";
 import "./globals.css";
-import Link from "next/link";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import PageTransition from "@/components/PageTransition";
+import { Providers } from "@/components/Providers";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces" });
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
+const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Sparkling Bakery",
-  description: "Custom cake orders and gallery",
+  title: "Sparkling Bakery | Premium Custom Cakes",
+  description: "Handcrafted, bespoke cakes and pastries made with the finest ingredients and a touch of elegance.",
 };
 
 export default function RootLayout({
@@ -17,25 +20,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${inter.variable} ${fraunces.variable}`}>
-        <header className="site-header">
-          <div className="header-content">
-            <Link href="/" className="logo">
-              Sparkling Bakery
-            </Link>
-            <nav className="main-nav">
-              <Link href="/">Home</Link>
-              <Link href="/gallery">Gallery</Link>
-              <Link href="/order">Order</Link>
-              <Link href="/enquiry">Contact</Link>
-            </nav>
-          </div>
-        </header>
-        <main>{children}</main>
-        <footer className="site-footer">
-          <p>&copy; {new Date().getFullYear()} Sparkling Bakery. All rights reserved.</p>
-        </footer>
+    <html lang="en" className="scroll-smooth">
+      <body className={`${inter.variable} ${fraunces.variable} font-sans bg-beige min-h-screen flex flex-col`}>
+        <Providers>
+          <Navbar />
+          <PageTransition>
+            <main className="flex-grow flex flex-col">
+              {children}
+            </main>
+          </PageTransition>
+          <Footer />
+        </Providers>
       </body>
     </html>
   );
