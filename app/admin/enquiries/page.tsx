@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { Mail, CheckCircle, Clock } from "lucide-react";
+import { DeleteEnquiryButton } from "@/components/DeleteEnquiryButton";
 
 export const revalidate = 0;
 
@@ -13,6 +14,12 @@ export default async function AdminEnquiriesPage() {
     "use server";
     const id = formData.get("id") as string;
     await prisma.enquiry.update({ where: { id }, data: { status: "responded" } });
+    revalidatePath("/admin/enquiries");
+  }
+
+  async function deleteEnquiry(id: string) {
+    "use server";
+    await prisma.enquiry.delete({ where: { id } });
     revalidatePath("/admin/enquiries");
   }
 
@@ -72,6 +79,8 @@ export default async function AdminEnquiriesPage() {
                     {enquiry.status === "new" ? <Clock size={11} /> : <CheckCircle size={11} />}
                     {enquiry.status === "new" ? "NEW" : "RESPONDED"}
                   </span>
+                  {/* Delete */}
+                  <DeleteEnquiryButton id={enquiry.id} name={enquiry.name} action={deleteEnquiry} />
                 </div>
               </div>
 
