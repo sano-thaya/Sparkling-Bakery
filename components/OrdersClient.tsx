@@ -55,6 +55,7 @@ export default function OrdersClient({
   const [orders, setOrders] = useState(initialOrders);
   const [sort, setSort] = useState<{ field: SortField; dir: SortDir }>({ field: "deliveryDate", dir: "asc" });
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [updatingRow, setUpdatingRow] = useState<string | null>(null);
 
   // Single delete confirm dialog
   const [deleteTarget, setDeleteTarget] = useState<Order | null>(null);
@@ -121,10 +122,18 @@ export default function OrdersClient({
   }
 
   // ── Status update (optimistic) ────────────────────────────────
-  function handleStatusForm(e: React.FormEvent<HTMLFormElement>, orderId: string) {
-    // Just let server action run; refresh from server on next load
-    // (no optimistic needed for status)
-    startTransition(() => {});
+  async function handleStatusForm(e: React.FormEvent<HTMLFormElement>, orderId: string) {
+    e.preventDefault();
+    setUpdatingRow(orderId);
+    try {
+      const formData = new FormData(e.currentTarget);
+      await updateStatusAction(formData);
+      // Let server revalidation handle the rest via router refresh or we can optimistically update
+      const newStatus = formData.get("status") as string;
+      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+    } finally {
+      setUpdatingRow(null);
+    }
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -159,11 +168,10 @@ export default function OrdersClient({
           <button
             key={s}
             onClick={() => setStatusFilter(s)}
-            className={`px-3 py-1.5 rounded-pill text-xs font-bold border transition-colors ${
-              statusFilter === s
-                ? "bg-magenta text-white border-magenta"
-                : "bg-white text-ink-light border-peach hover:border-magenta/50"
-            }`}
+            className={`px-3 py-1.5 rounded-pill text-xs font-bold border transition-colors ${statusFilter === s
+              ? "bg-magenta text-white border-magenta"
+              : "bg-white text-ink-light border-peach hover:border-magenta/50"
+              }`}
           >
             {s === "all" ? "All" : s.charAt(0).toUpperCase() + s.slice(1)}
           </button>
@@ -278,9 +286,10 @@ export default function OrdersClient({
                 </div>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 bg-magenta text-white text-sm font-bold rounded-xl hover:bg-rose-deep transition-colors"
+                  disabled={updatingRow === order.id}
+                  className="px-5 py-2.5 min-h-[44px] bg-magenta text-white text-sm font-bold rounded-xl hover:bg-rose-deep transition-colors disabled:opacity-50"
                 >
-                  Update Status
+                  {updatingRow === order.id ? "..." : "Update Status"}
                 </button>
               </form>
             </div>

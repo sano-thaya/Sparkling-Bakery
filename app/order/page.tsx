@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { getServerSession } from "next-auth";
+import OrderFormClient from "@/components/OrderFormClient";
 
 export default async function OrderPage() {
   const session = await getServerSession();
@@ -111,52 +112,12 @@ export default async function OrderPage() {
         </AnimatedSection>
         
         <AnimatedSection delay={0.1}>
-          <div className="card p-8 md:p-12 shadow-elevated">
-            <form action={createOrder} className="space-y-8">
-              
-              <div className="bg-peach/30 p-4 rounded-xl border border-peach mb-8 flex items-center gap-4">
-                <div className="w-10 h-10 bg-magenta text-white rounded-full flex items-center justify-center font-bold">
-                  {user.name?.charAt(0) || "C"}
-                </div>
-                <div>
-                  <p className="text-sm text-ink font-bold">Ordering as {user.name || "Customer"}</p>
-                  <p className="text-xs text-ink-light">{user.email}</p>
-                </div>
-              </div>
-
-              <div>
-                <h2 className="text-2xl font-bold mb-6 text-ink border-b border-peach pb-2">Cake Details</h2>
-                <div className="space-y-6">
-                  <div>
-                    <label htmlFor="description" className="label-text">Design & Flavor Notes *</label>
-                    <p className="text-xs text-ink-light mb-2">Please describe your desired theme, flavors, sizing, and any allergies.</p>
-                    <textarea id="description" name="description" className="input-field min-h-[120px] resize-y" required placeholder="e.g. A 2-tier vanilla cake with strawberry filling and pink floral buttercream..."></textarea>
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="deliveryDate" className="label-text">Requested Date *</label>
-                    <input type="date" id="deliveryDate" name="deliveryDate" className="input-field md:w-1/2" required />
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-gradient-to-r from-pink-light/30 to-peach/30 rounded-2xl p-6 border border-pink/50 mt-8">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-bold text-ink">Base Deposit:</span>
-                  <span className="text-2xl font-serif text-magenta font-bold">${basePrice.toFixed(2)}</span>
-                </div>
-                <p className="text-sm text-ink-light font-medium">
-                  This secures your date on our calendar. We will contact you to confirm final design details, which may incur additional costs depending on complexity.
-                </p>
-              </div>
-              
-              <div className="pt-4">
-                <button type="submit" className="w-full btn-primary py-4 text-lg">
-                  Proceed to Secure Payment
-                </button>
-              </div>
-            </form>
-          </div>
+          <OrderFormClient 
+            basePrice={basePrice}
+            userName={user.name}
+            userEmail={user.email}
+            createOrderAction={createOrder}
+          />
         </AnimatedSection>
       </div>
     </div>

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Image from "next/image";
-import { Eye, Image as ImageIcon, Pencil, X } from "lucide-react";
+import { Eye, Image as ImageIcon, Pencil, X, CheckCircle, AlertTriangle } from "lucide-react";
 import { DeletePostButton } from "@/components/DeletePostButton";
 
 type Post = {
@@ -26,17 +26,50 @@ export default function PostsClient({
   deletePostAction: (formData: FormData) => Promise<void>;
 }) {
   const [editTarget, setEditTarget] = useState<Post | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+  
+  const formRef = useRef<HTMLFormElement>(null);
 
   const isEditing = editTarget !== null;
 
   function handleEdit(post: Post) {
     setEditTarget(post);
+    setErrorMsg("");
+    setSuccessMsg("");
     // Scroll to form on mobile
     document.getElementById("post-form-panel")?.scrollIntoView({ behavior: "smooth" });
   }
 
   function cancelEdit() {
     setEditTarget(null);
+    setErrorMsg("");
+    setSuccessMsg("");
+    formRef.current?.reset();
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>, action: (formData: FormData) => Promise<void>) {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setErrorMsg("");
+    setSuccessMsg("");
+    
+    try {
+      const formData = new FormData(e.currentTarget);
+      await action(formData);
+      setSuccessMsg(isEditing ? "Post updated successfully!" : "Post created successfully!");
+      if (!isEditing) {
+        e.currentTarget.reset();
+      } else {
+        setEditTarget(null);
+      }
+      setTimeout(() => setSuccessMsg(""), 3000);
+    } catch (err: any) {
+      setErrorMsg(err.message || "An error occurred while saving.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -60,15 +93,30 @@ export default function PostsClient({
                   onClick={cancelEdit}
                   className="p-1.5 rounded-lg text-ink-light hover:text-ink hover:bg-cream transition-colors"
                   title="Cancel edit"
+                  type="button"
                 >
                   <X size={18} />
                 </button>
               )}
             </div>
+            
+            {successMsg && (
+              <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-xl flex items-center gap-2 text-sm font-bold">
+                <CheckCircle size={16} />
+                {successMsg}
+              </div>
+            )}
+            
+            {errorMsg && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl flex items-center gap-2 text-sm font-bold">
+                <AlertTriangle size={16} />
+                {errorMsg}
+              </div>
+            )}
 
             {isEditing ? (
               /* ─── Edit form ─── */
-              <form action={updatePostAction} className="space-y-5">
+              <form ref={formRef} onSubmit={(e) => handleSubmit(e, updatePostAction)} className="space-y-5">
                 <input type="hidden" name="id" value={editTarget.id} />
                 {/* Current image preview */}
                 {editTarget.imageUrls[0] && (
@@ -90,7 +138,7 @@ export default function PostsClient({
                   <input
                     type="text"
                     name="title"
-                    className="input-field py-2.5"
+                    className="input-field py-3 w-full"
                     required
                     defaultValue={editTarget.title}
                   />
@@ -100,7 +148,7 @@ export default function PostsClient({
                   <input
                     type="text"
                     name="category"
-                    className="input-field py-2.5"
+                    className="input-field py-3 w-full"
                     defaultValue={editTarget.category ?? ""}
                     placeholder="Wedding, Birthday..."
                   />
@@ -109,7 +157,7 @@ export default function PostsClient({
                   <label className="block text-sm font-bold text-ink-light mb-2">Description</label>
                   <textarea
                     name="description"
-                    className="input-field py-2.5 min-h-[90px] resize-y"
+                    className="input-field py-3 w-full min-h-[90px] resize-y"
                     defaultValue={editTarget.description ?? ""}
                     placeholder="Describe the flavors and design..."
                   />
@@ -126,13 +174,14 @@ export default function PostsClient({
                   />
                 </div>
                 <div className="pt-2 flex gap-3">
-                  <button type="submit" className="flex-1 btn-primary py-3">
-                    Save Changes
+                  <button type="submit" disabled={isSubmitting} className="flex-1 btn-primary py-3 min-h-[44px] disabled:opacity-50">
+                    {isSubmitting ? "Saving..." : "Save Changes"}
                   </button>
                   <button
                     type="button"
                     onClick={cancelEdit}
-                    className="px-4 py-3 border border-peach rounded-pill text-ink font-bold text-sm hover:bg-cream transition-colors"
+                    disabled={isSubmitting}
+                    className="px-4 py-3 min-h-[44px] border border-peach rounded-pill text-ink font-bold text-sm hover:bg-cream transition-colors disabled:opacity-50"
                   >
                     Cancel
                   </button>
@@ -140,18 +189,18 @@ export default function PostsClient({
               </form>
             ) : (
               /* ─── Create form ─── */
-              <form action={createPostAction} className="space-y-5">
+              <form ref={formRef} onSubmit={(e) => handleSubmit(e, createPostAction)} className="space-y-5">
                 <div>
                   <label className="block text-sm font-bold text-ink-light mb-2">Title *</label>
-                  <input type="text" name="title" className="input-field py-2.5" required placeholder="Strawberry Vanilla Tier" />
+                  <input type="text" name="title" className="input-field py-3 w-full" required placeholder="Strawberry Vanilla Tier" />
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-ink-light mb-2">Category</label>
-                  <input type="text" name="category" className="input-field py-2.5" placeholder="Wedding, Birthday..." />
+                  <input type="text" name="category" className="input-field py-3 w-full" placeholder="Wedding, Birthday..." />
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-ink-light mb-2">Description</label>
-                  <textarea name="description" className="input-field py-2.5 min-h-[90px] resize-y" placeholder="Describe the flavors and design..." />
+                  <textarea name="description" className="input-field py-3 w-full min-h-[90px] resize-y" placeholder="Describe the flavors and design..." />
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-ink-light mb-2">Upload Image *</label>
@@ -164,7 +213,9 @@ export default function PostsClient({
                   />
                 </div>
                 <div className="pt-2">
-                  <button type="submit" className="w-full btn-primary py-3">Publish Post</button>
+                  <button type="submit" disabled={isSubmitting} className="w-full btn-primary py-3 min-h-[44px] disabled:opacity-50">
+                    {isSubmitting ? "Publishing..." : "Publish Post"}
+                  </button>
                 </div>
               </form>
             )}
@@ -209,7 +260,7 @@ export default function PostsClient({
                     <button
                       onClick={() => handleEdit(post)}
                       title="Edit post"
-                      className="absolute top-3 right-12 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 backdrop-blur-sm p-2 rounded-full text-magenta hover:bg-magenta hover:text-white transition-colors shadow-sm"
+                      className="absolute top-3 right-12 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity bg-white/90 backdrop-blur-sm p-2 rounded-full text-magenta hover:bg-magenta hover:text-white shadow-sm"
                     >
                       <Pencil size={15} />
                     </button>

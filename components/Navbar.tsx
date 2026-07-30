@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { motion, useScroll, useMotionValueEvent, AnimatePresence } from "framer-motion";
 import { useSession, signOut } from "next-auth/react";
-import { User, ChevronDown } from "lucide-react";
+import { User, ChevronDown, Menu, X } from "lucide-react";
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -12,12 +12,14 @@ export default function Navbar() {
   const [hidden, setHidden] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     const previous = scrollY.getPrevious() || 0;
     if (latest > previous && latest > 150) {
       setHidden(true);
       setIsDropdownOpen(false); // Close dropdown on scroll
+      setIsMobileMenuOpen(false); // Close mobile menu on scroll down
     } else {
       setHidden(false);
     }
@@ -36,10 +38,11 @@ export default function Navbar() {
         }`}
     >
       <div className="container-custom h-20 flex items-center justify-between">
-        <Link href="/" className="font-serif text-3xl font-extrabold tracking-tight text-ink">
+        <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="font-serif text-3xl font-extrabold tracking-tight text-ink relative z-50">
           Sparkling <span className="text-magenta">Bakery</span>
         </Link>
 
+        {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-8 font-bold text-ink">
           <Link href="/" className="hover:text-magenta transition-colors duration-200">Home</Link>
           <Link href="/gallery" className="hover:text-magenta transition-colors duration-200">Gallery</Link>
@@ -106,8 +109,45 @@ export default function Navbar() {
               </Link>
             </div>
           )}
+
+          {/* Mobile Menu Button */}
+          <button 
+            className="md:hidden p-2 text-ink relative z-50 ml-2" 
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile Nav Overlay */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.2 }}
+            className="md:hidden fixed inset-0 bg-cream z-40 pt-24 px-6 pb-6 overflow-y-auto"
+          >
+            <nav className="flex flex-col gap-6 text-xl font-bold text-ink items-center mt-8">
+              <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-magenta transition-colors">Home</Link>
+              <Link href="/gallery" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-magenta transition-colors">Gallery</Link>
+              <Link href="/enquiry" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-magenta transition-colors">Contact</Link>
+              <Link href="/order" onClick={() => setIsMobileMenuOpen(false)} className="px-8 py-3 mt-4 rounded-pill bg-magenta text-white text-center hover:bg-magenta-dark transition-colors">
+                Order Now
+              </Link>
+              
+              {!session && (
+                <div className="flex flex-col items-center gap-4 w-full mt-4 border-t border-peach pt-8">
+                  <Link href="/login" onClick={() => setIsMobileMenuOpen(false)} className="w-full py-3 text-center border-2 border-peach rounded-pill">Log in</Link>
+                  <Link href="/signup" onClick={() => setIsMobileMenuOpen(false)} className="w-full py-3 text-center border-2 border-magenta text-magenta rounded-pill">Sign up</Link>
+                </div>
+              )}
+            </nav>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.header>
   );
 }

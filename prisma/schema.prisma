@@ -53,8 +53,9 @@ model Post {
 }
 
 model Settings {
-  id         String  @id @default(cuid())
-  baseAmount Decimal @default(0)
+  id             String    @id @default(cuid())
+  baseAmount     Decimal   @default(0)
+  graphClearedAt DateTime?
 }
 
 model Enquiry {

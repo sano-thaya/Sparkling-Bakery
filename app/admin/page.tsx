@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { Package, Mail, Image as ImageIcon, ArrowRight, DollarSign, ShoppingCart, Clock } from "lucide-react";
 import RevenueChart from "@/components/RevenueChart";
+import ResetGraphClient from "@/components/ResetGraphClient";
+import { revalidatePath } from "next/cache";
 
 export const revalidate = 0;
 
@@ -11,22 +13,29 @@ export default async function AdminDashboard() {
   const recentEnquiries = await prisma.enquiry.count({ where: { status: "new" } });
   const galleryPosts = await prisma.post.count();
 
+  const settings = await prisma.settings.findFirst();
+  const graphClearedAt = settings?.graphClearedAt;
+
   // 2. Revenue & Order Analytics
   const allOrders = await prisma.order.findMany({
     select: { price: true, status: true, createdAt: true },
     orderBy: { createdAt: 'asc' }
   });
 
-  const totalOrders = allOrders.length;
-  const notYetCompleted = allOrders.filter(o => o.status === "pending" || o.status === "in-progress").length;
+  const validOrders = graphClearedAt 
+    ? allOrders.filter(o => new Date(o.createdAt) >= new Date(graphClearedAt))
+    : allOrders;
+
+  const totalOrders = validOrders.length;
+  const notYetCompleted = validOrders.filter(o => o.status === "pending" || o.status === "in-progress").length;
   
   // Calculate total revenue (assuming only completed or confirmed orders count towards actual revenue, 
   // but for a bakery deposit they might all count. We'll sum all for simplicity, or just completed).
-  const totalRevenue = allOrders.reduce((sum, order) => sum + Number(order.price), 0);
+  const totalRevenue = validOrders.reduce((sum, order) => sum + Number(order.price), 0);
 
   // Group revenue by date for the chart
   const revenueByDate: Record<string, number> = {};
-  allOrders.forEach(order => {
+  validOrders.forEach(order => {
     const dateStr = order.createdAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     if (!revenueByDate[dateStr]) revenueByDate[dateStr] = 0;
     revenueByDate[dateStr] += Number(order.price);
@@ -50,13 +59,29 @@ export default async function AdminDashboard() {
     }
   }
 
+  async function handleResetGraph() {
+    "use server";
+    const existing = await prisma.settings.findFirst();
+    if (existing) {
+      await prisma.settings.update({
+        where: { id: existing.id },
+        data: { graphClearedAt: new Date() }
+      });
+    } else {
+      await prisma.settings.create({
+        data: { baseAmount: 0, graphClearedAt: new Date() }
+      });
+    }
+    revalidatePath("/admin");
+  }
+
   return (
     <div className="space-y-12">
       
       {/* 2a. Overview Section */}
       <section>
         <h2 className="text-2xl font-extrabold text-ink mb-6">Overview</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           
           <div className="bg-white rounded-3xl p-6 shadow-soft border border-peach flex flex-col relative overflow-hidden group">
             <div className="absolute -right-6 -top-6 bg-pink-light/30 w-32 h-32 rounded-full blur-2xl group-hover:bg-pink-light/60 transition-colors"></div>
@@ -111,10 +136,13 @@ export default async function AdminDashboard() {
 
       {/* 2b. Revenue Tracker / Analysis */}
       <section>
-        <h2 className="text-2xl font-extrabold text-ink mb-6">Revenue & Analysis</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <h2 className="text-2xl font-extrabold text-ink">Revenue & Analysis</h2>
+          <ResetGraphClient resetGraphAction={handleResetGraph} />
+        </div>
         
         {/* Stat Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <div className="bg-cream rounded-2xl p-6 border border-peach flex items-center gap-4">
             <div className="bg-white p-3 rounded-full shadow-sm">
               <DollarSign className="text-magenta" size={24} />

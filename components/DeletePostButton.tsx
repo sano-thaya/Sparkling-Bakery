@@ -11,7 +11,7 @@ export function DeletePostButton({ id, action }: { id: string; action: (formData
           e.preventDefault();
         }
       }}
-      className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity"
+      className="absolute top-3 right-3 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
     >
       <input type="hidden" name="id" value={id} />
       <button
