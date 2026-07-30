@@ -31,18 +31,17 @@ export default function AdminLayout({
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`block px-4 py-3 rounded-lg text-sm font-medium transition-colors duration-200 ${
-                    isActive 
-                      ? "bg-brown text-white shadow-md" 
-                      : "text-brown-light hover:bg-beige hover:text-brown"
-                  }`}
+                  className={`block px-4 py-3 rounded-lg text-sm font-medium transition-colors duration-200 ${isActive
+                    ? "bg-magenta text-white shadow-md"
+                    : "text-brown-light hover:bg-beige hover:text-brown"
+                    }`}
                 >
                   {item.name}
                 </Link>
               );
             })}
           </nav>
-          
+
           <div className="pt-6 border-t border-beige mt-auto">
             <button
               onClick={() => signOut({ callbackUrl: "/" })}

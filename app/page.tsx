@@ -3,15 +3,16 @@ import { AnimatedSection, AnimatedCard } from "@/components/AnimatedSection";
 import Image from "next/image";
 import { Star, ArrowRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import Hero from "@/components/Hero";
 
 export const revalidate = 60;
 
 export default async function Home() {
-  // Fetch latest 3 gallery posts for "Previous Work" section
+  // Fetch latest 6 gallery posts for Hero carousel and "Previous Work" section
   let recentPosts: { id: string; title: string; category: string | null; imageUrls: string[] }[] = [];
   try {
     recentPosts = await prisma.post.findMany({
-      take: 3,
+      take: 6,
       orderBy: { createdAt: "desc" },
       select: { id: true, title: true, category: true, imageUrls: true },
     });
@@ -22,44 +23,7 @@ export default async function Home() {
   return (
     <div className="flex-grow flex flex-col">
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center pt-20 pb-24 overflow-hidden bg-gradient-diagonal">
-        <AnimatedSection className="container-custom relative z-10 w-full">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="text-left">
-              <span className="inline-block py-1.5 px-4 rounded-pill bg-white/80 backdrop-blur-sm text-magenta font-bold text-sm mb-6 shadow-sm border border-pink">
-                🍰 Freshly Baked Custom Cakes
-              </span>
-              <h1 className="text-6xl md:text-[5.5rem] font-sans font-extrabold tracking-tighter leading-[0.95] mb-8">
-                <span className="block text-ink">Premium</span>
-                <span className="block text-magenta">Bakery</span>
-                <span className="block text-pink font-light italic">Experience</span>
-              </h1>
-              <div className="bg-white/60 p-6 rounded-3xl backdrop-blur-sm border border-white/80 shadow-soft mb-8 max-w-lg">
-                <h2 className="font-serif text-3xl font-bold italic text-rose-deep mb-3">Baked to Bless</h2>
-                <p className="text-ink-light font-medium leading-relaxed">
-                  Every celebration deserves something undeniably sweet. We deliver bold flavors that surprise and delight, baked fresh daily.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-4 items-center">
-                <Link href="/order" className="btn-primary">Order a Custom Cake</Link>
-                <Link href="/gallery" className="btn-secondary">View Collection</Link>
-              </div>
-            </div>
-
-            <div className="relative">
-              <AnimatedCard index={1} className="relative aspect-[4/5] w-full max-w-lg mx-auto bg-white rounded-[3rem] p-4 shadow-elevated border border-peach">
-                <div className="w-full h-full bg-peach/30 rounded-[2.5rem] overflow-hidden relative flex items-center justify-center flex-col">
-                  <div className="absolute inset-0 bg-gradient-to-tr from-pink/20 to-transparent" />
-                  <div className="z-10 text-center p-8">
-                    <span className="text-6xl mb-4 block">🎂</span>
-                    <h3 className="font-serif text-2xl font-bold text-rose-deep italic">Our Signature Stack</h3>
-                  </div>
-                </div>
-              </AnimatedCard>
-            </div>
-          </div>
-        </AnimatedSection>
-      </section>
+      <Hero recentPosts={recentPosts} />
 
 
 
