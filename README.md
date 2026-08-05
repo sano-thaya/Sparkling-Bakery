@@ -55,3 +55,5 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ## Vercel Cron Setup
 A daily cron job is configured at `/api/cron/daily-reminders`. In your Vercel project settings, configure `vercel.json` with your desired schedule to automatically hit this endpoint and dispatch the daily reminder emails to the admin.
+
+## Live Link - https://sparkling-bakery-ashy.vercel.app/
